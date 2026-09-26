@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Comprovante de Compra — Due Fiori por M&T</title>
+  
+  <!-- Fontes Oficiais da Marca -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Bibliotecas de Renderização -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    :root {
+      --brand-rose: #b76e79;
+      --brand-rose-dark: #9d5661;
+      --brand-creme: #e9e5dd;
+      --brand-cinza-bg: #f5f5f5;
+      --brand-texto: #4f4a45;
+      --brand-borda: #e5ded7;
+      --brand-card-bg: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--brand-cinza-bg);
+      color: var(--brand-texto);
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 12px;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    /* PAINEL DE FORMULÁRIO RESPONSIVO */
+    .form-painel {
+      background: #ffffff;
+      padding: 18px;
+      border-radius: 12px;
+      border: 1px solid var(--brand-borda);
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(79, 74, 69, 0.05);
+    }
+
+    .form-painel h3 {
+      margin-top: 0;
+      color: var(--brand-rose);
+      border-bottom: 2px solid var(--brand-creme);
+      padding-bottom: 8px;
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    label {
+      font-size: 12.5px;
+      font-weight: 600;
+      display: block;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 9px 10px;
+      border: 1px solid var(--brand-borda);
+      border-radius: 6px;
+      font-size: 14px;
+      color: var(--brand-texto);
+      outline-color: var(--brand-rose);
+      background-color: #fff;
+    }
+
+    .header-itens-form {
+      display: grid;
+      grid-template-columns: 75px 60px 1fr 100px 100px 36px;
+      gap: 6px;
+      margin-top: 12px;
+      margin-bottom: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--brand-texto);
+      padding: 0 2px;
+    }
+
+    .item-row {
+      display: grid;
+      grid-template-columns: 75px 60px 1fr 100px 100px 36px;
+      gap: 6px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+
+    .f-total {
+      background: #faf8f5 !important;
+      font-weight: 600;
+      color: #6a635d;
+      text-align: right;
+    }
+
+    .btn-add {
+      background: var(--brand-creme);
+      color: var(--brand-texto);
+      border: 1px dashed var(--brand-rose);
+      padding: 10px;
+      width: 100%;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 6px;
+      font-size: 13px;
+    }
+
+    .btn-del {
+      background: #e06d6d;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* BOTÕES DE AÇÃO */
+    .botoes-acao {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .btn-acao {
+      padding: 12px 6px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-pdf { background: var(--brand-rose); color: #fff; }
+    .btn-png { background: #6272a4; color: #fff; }
+    .btn-whats { background: #25D366; color: #fff; }
+
+    /* ÁREA VISUAL DO COMPROVANTE (RESPONSIVA NA TELA) */
+    .preview-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 25px;
+    }
+
+    #recibo-visual {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--brand-borda);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+    }
+
+    /* CABEÇALHO COM A TIPOGRAFIA EXATA DO BANNER */
+    .recibo-header {
+      background-color: var(--brand-rose);
+      color: #ffffff;
+      padding: 24px 26px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .marca-box h1 {
+      margin: 0;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 34px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      line-height: 1;
+    }
+
+    .marca-box span {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      opacity: 0.95;
+      display: block;
+      margin-top: 5px;
+      font-weight: 400;
+    }
+
+    .contato-box {
+      text-align: right;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 13px;
+      border-left: 1px solid rgba(255, 255, 255, 0.5);
+      padding-left: 18px;
+      line-height: 1.7;
+      font-weight: 400;
+    }
+
+    .contato-linha {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .contato-linha svg {
+      width: 15px;
+      height: 15px;
+      fill: #ffffff;
+    }
+
+    /* CORPO */
+    .recibo-corpo {
+      padding: 24px;
+      background: #ffffff;
+    }
+
+    .box-info, .box-cliente {
+      background: #ffffff;
+      border: 1px solid var(--brand-borda);
+      border-radius: 8px;
+      padding: 11px 18px;
+      font-size: 13.5px;
+      margin-bottom: 12px;
+    }
+
+    .box-info {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .tabela-itens {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+    }
+
+    .tabela-itens th {
+      background: var(--brand-creme);
+      color: var(--brand-texto);
+      padding: 10px 12px;
+      font-size: 11.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      text-align: left;
+    }
+
+    .tabela-itens th:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+    .tabela-itens th:last-child { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+
+    .tabela-itens td {
+      padding: 12px;
+      font-size: 13px;
+      border-bottom: 1px solid #f2eee8;
+    }
+
+    .tabela-itens td.valor { text-align: right; }
+
+    .totais-container {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 20px;
+    }
+
+    .totais-box {
+      width: 310px;
+      background: #ffffff;
+      border: 1px solid var(--brand-borda);
+      border-radius: 8px;
+      padding: 14px 18px;
+    }
+
+    .totais-linha {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13.5px;
+      margin-bottom: 5px;
+    }
+
+    .totais-linha.destaque {
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--brand-rose);
+      border-top: 1px dashed var(--brand-borda);
+      padding-top: 8px;
+      margin-top: 8px;
+    }
+
+    .totais-linha.pagto {
+      font-size: 11.5px;
+      color: #6e6761;
+      margin-top: 5px;
+    }
+
+    .recibo-footer {
+      text-align: center;
+      background: var(--brand-creme);
+      padding: 18px 20px;
+      border-radius: 8px;
+      color: var(--brand-texto);
+    }
+
+    .recibo-footer p { 
+      margin: 4px 0; 
+      font-size: 12pt;
+    }
+
+    .flor-msg {
+      font-weight: 600;
+      color: var(--brand-rose-dark);
+      font-size: 12.5pt !important;
+      margin-top: 5px !important;
+    }
+
+    /* ADAPTAÇÕES MOBILE NA TELA */
+    @media (max-width: 650px) {
+      .botoes-acao { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .header-itens-form { display: none; }
+      .item-row {
+        grid-template-columns: 1fr 1fr;
+        background: #fbf9f6;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid var(--brand-borda);
+      }
+      .item-row input { grid-column: span 1; }
+      .item-row .f-item { grid-column: span 2; }
+      .item-row .f-total { grid-column: span 1; }
+      .item-row .btn-del { grid-column: span 2; width: 100%; height: 32px; }
+      .totais-box { width: 100%; }
+      .recibo-header { padding: 18px 16px; }
+      .marca-box h1 { font-size: 26px; }
+      .contato-box { font-size: 11.5px; padding-left: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <!-- FORMULÁRIO -->
+  <div class="form-painel">
+    <h3>🌷 Lançamento de Venda</h3>
+    
+    <div>
+      <label>Emissão (Data e Hora da Venda):</label>
+      <input type="text" id="inDataHora" readonly style="background: #f7f7f7; font-weight: 600;">
+    </div>
+
+    <label>Cliente:</label>
+    <input type="text" id="inCliente" placeholder="Ex: Consumidor" oninput="atualizarPreview()">
+
+    <label style="margin-top: 14px;">Itens Comprados:</label>
+
+    <div class="header-itens-form">
+      <span>Cód.</span>
+      <span>Quant</span>
+      <span>Item</span>
+      <span style="text-align: right;">Valor Unit.</span>
+      <span style="text-align: right;">Valor Total</span>
+      <span></span>
+    </div>
+
+    <div id="itensContainer"></div>
+    <button type="button" class="btn-add" onclick="adicionarItem()">+ Inserir Outro Item</button>
+
+    <div class="grid-2" style="margin-top: 12px;">
+      <div>
+        <label>Desconto (%):</label>
+        <input type="number" id="inDescontoPerc" value="0" min="0" max="100" step="0.5" oninput="calcular();">
+      </div>
+      <div>
+        <label>Forma de Pagamento:</label>
+        <select id="inPagamento" onchange="atualizarPreview()">
+          <option value="Pix">Pix</option>
+          <option value="Cartão de Crédito">Cartão de Crédito</option>
+          <option value="Cartão de Débito">Cartão de Débito</option>
+          <option value="Dinheiro">Dinheiro</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="botoes-acao">
+      <button class="btn-acao btn-pdf" onclick="processarExportacao('pdf')">📄 Baixar PDF (A4)</button>
+      <button class="btn-acao btn-png" onclick="processarExportacao('png')">🖼️ Baixar Imagem (PNG)</button>
+      <button class="btn-acao btn-whats" onclick="copiarTextoWhats()">💬 Copiar p/ WhatsApp</button>
+    </div>
+  </div>
+
+  <!-- PRÉVIA DO COMPROVANTE -->
+  <div class="preview-wrapper">
+    <div id="recibo-visual">
+      
+      <!-- Cabeçalho idêntico ao Banner -->
+      <div class="recibo-header">
+        <div class="marca-box">
+          <h1>Due Fiori</h1>
+          <span>POR M&T</span>
+        </div>
+        <div class="contato-box">
+          <div class="contato-linha">
+            <svg viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.599 2.679-.702c.974.553 1.77.816 2.781.816 3.18 0 5.767-2.587 5.767-5.766.001-3.182-2.585-5.77-5.767-5.77zm3.385 8.243c-.144.405-.837.774-1.17.822-.312.043-.634.072-1.802-.411-.976-.404-1.637-1.393-1.685-1.458-.048-.065-.399-.533-.399-1.018 0-.485.253-.723.344-.822.091-.099.198-.124.264-.124.066 0 .132.001.19.005.061.003.143-.023.223.169.083.198.283.693.308.744.025.05.041.108.008.174-.033.066-.05.107-.099.165-.049.059-.104.13-.148.175-.049.049-.1.103-.043.202.058.099.256.423.55 685.378.337.697.442.796.491.099.049.157.042.215-.025.058-.066.248-.289.314-.388.066-.099.132-.083.223-.05.091.033.578.273.677.322.099.05.165.074.19.116.025.041.025.24-.119.645zM12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.98-1.309A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.613 0-3.119-.49-4.382-1.332l-.314-.209-2.946.773.787-2.871-.229-.364C4.015 14.862 3.5 13.486 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/></svg>
+            <span>(11) 96143-6907</span>
+          </div>
+          <div class="contato-linha">
+            <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            <span>@duefiori.semijoias</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informações da Venda -->
+      <div class="recibo-corpo">
+        <div class="box-info">
+          <div><strong>Data:</strong> <span id="lblData">--/--/----</span></div>
+          <div><strong>Hora:</strong> <span id="lblHora">--:--</span></div>
+        </div>
+
+        <div class="box-cliente">
+          <strong>Cliente:</strong> <span id="lblCliente">Consumidor</span>
+        </div>
+
+        <table class="tabela-itens">
+          <thead>
+            <tr>
+              <th style="width: 75px;">CÓD.</th>
+              <th style="width: 60px;">QUANT</th>
+              <th>ITEM</th>
+              <th style="text-align: right; width: 120px;">VALOR UNIT.</th>
+              <th style="text-align: right; width: 120px;">VALOR TOTAL</th>
+            </tr>
+          </thead>
+          <tbody id="previewTbody"></tbody>
+        </table>
+
+        <div class="totais-container">
+          <div class="totais-box">
+            <div class="totais-linha">
+              <span>Subtotal:</span>
+              <span id="lblSubtotal">R$ 0,00</span>
+            </div>
+            <div class="totais-linha" style="color: var(--brand-rose);">
+              <span id="lblDescTitulo">Desconto (0%):</span>
+              <span id="lblDesconto">- R$ 0,00</span>
+            </div>
+            <div class="totais-linha destaque">
+              <span>TOTAL PAGO:</span>
+              <span id="lblTotal">R$ 0,00</span>
+            </div>
+            <div class="totais-linha pagto">
+              <span>Forma de Pagto:</span>
+              <span id="lblFormaPagto">Pix</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="recibo-footer">
+          <p><strong>Garantia do banho:</strong> 1 ano a partir desta data.</p>
+          <p class="flor-msg">Celebre seu florescer! 🌷</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function paraNumero(str) {
+    if (!str) return 0;
+    return parseFloat(str.replace(/\./g, '').replace(',', '.')) || 0;
+  }
+
+  function paraMoeda(num) {
+    return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function formatarMoedaInput(el) {
+    let v = el.value.replace(/\D/g, '');
+    if (v === '') { el.value = '0,00'; return; }
+    v = (parseInt(v, 10) / 100).toFixed(2) + '';
+    v = v.replace('.', ',');
+    v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+    el.value = v;
+  }
+
+  function inicializarSessao() {
+    const agora = new Date();
+    const dataStr = agora.toLocaleDateString('pt-BR');
+    const horaStr = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    document.getElementById('inDataHora').value = `${dataStr} às ${horaStr}`;
+    document.getElementById('lblData').innerText = dataStr;
+    document.getElementById('lblHora').innerText = horaStr;
+
+    adicionarItem("DF-101", 1, "Colar Riviera Zircônia", "180,00");
+  }
+
+  function adicionarItem(cod = '', qtd = 1, item = '', unit = '0,00') {
+    const container = document.getElementById('itensContainer');
+    const div = document.createElement('div');
+    div.className = 'item-row';
+    div.innerHTML = `
+      <input type="text" class="f-cod" placeholder="Cód." value="${cod}" oninput="atualizarPreview()">
+      <input type="number" class="f-qtd" value="${qtd}" min="1" oninput="calcular()">
+      <input type="text" class="f-item" placeholder="Descrição do item" value="${item}" oninput="atualizarPreview()">
+      <input type="text" class="f-unit" placeholder="0,00" value="${unit}" oninput="formatarMoedaInput(this); calcular();">
+      <input type="text" class="f-total" value="0,00" readonly>
+      <button type="button" class="btn-del" onclick="removerItem(this)">×</button>
+    `;
+    container.appendChild(div);
+    calcular();
+  }
+
+  function removerItem(btn) {
+    const linhas = document.querySelectorAll('.item-row');
+    if (linhas.length > 1) {
+      btn.parentElement.remove();
+      calcular();
+    } else {
+      alert("O comprovante precisa conter pelo menos um item.");
+    }
+  }
+
+  function calcular() {
+    let subtotal = 0;
+    const rows = document.querySelectorAll('.item-row');
+
+    rows.forEach(r => {
+      const qtd = parseFloat(r.querySelector('.f-qtd').value) || 0;
+      const precoUnit = paraNumero(r.querySelector('.f-unit').value);
+      const totalItem = qtd * precoUnit;
+
+      r.querySelector('.f-total').value = 'R$ ' + paraMoeda(totalItem);
+      subtotal += totalItem;
+    });
+
+    const percDesc = parseFloat(document.getElementById('inDescontoPerc').value) || 0;
+    const valorDesconto = (subtotal * percDesc) / 100;
+    const totalPagar = Math.max(0, subtotal - valorDesconto);
+
+    document.getElementById('lblSubtotal').innerText = 'R$ ' + paraMoeda(subtotal);
+    document.getElementById('lblDescTitulo').innerText = `Desconto (${percDesc}%):`;
+    document.getElementById('lblDesconto').innerText = '- R$ ' + paraMoeda(valorDesconto);
+    document.getElementById('lblTotal').innerText = 'R$ ' + paraMoeda(totalPagar);
+
+    atualizarPreview();
+  }
+
+  function atualizarPreview() {
+    const cliente = document.getElementById('inCliente').value.trim() || 'Consumidor';
+    document.getElementById('lblCliente').innerText = cliente;
+    document.getElementById('lblFormaPagto').innerText = document.getElementById('inPagamento').value;
+
+    const tbody = document.getElementById('previewTbody');
+    tbody.innerHTML = '';
+
+    document.querySelectorAll('.item-row').forEach(r => {
+      const cod = r.querySelector('.f-cod').value.trim() || '-';
+      const qtd = r.querySelector('.f-qtd').value || '1';
+      const descItem = r.querySelector('.f-item').value.trim() || 'Item';
+      const unit = paraNumero(r.querySelector('.f-unit').value);
+      const tot = (parseFloat(qtd) || 0) * unit;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${cod}</strong></td>
+        <td>${qtd}x</td>
+        <td>${descItem}</td>
+        <td class="valor">R$ ${paraMoeda(unit)}</td>
+        <td class="valor">R$ ${paraMoeda(tot)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // SOLUÇÃO DEFINITIVA ANTI-CORTE PARA IPHONE/SAFARI/CHROME
+  // Clona o recibo em um container virtual de 794px fixos fora da tela antes de renderizar
+  async function processarExportacao(tipo) {
+    const original = document.getElementById('recibo-visual');
+    const cliente = (document.getElementById('inCliente').value.trim() || 'cliente').toLowerCase().replace(/\s+/g, '_');
+
+    // Cria clone fora da tela garantindo tamanho integral de desktop/A4
+    const clone = original.cloneNode(true);
+    clone.style.width = '794px';
+    clone.style.minWidth = '794px';
+    clone.style.maxWidth = '794px';
+    clone.style.position = 'absolute';
+    clone.style.left = '-9999px';
+    clone.style.top = '0';
+    document.body.appendChild(clone);
+
+    try {
+      const canvas = await html2canvas(clone, {
+        scale: 2.2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        width: 794,
+        windowWidth: 794
+      });
+
+      document.body.removeChild(clone);
+
+      if (tipo === 'png') {
+        const imgData = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `comprovante_due_fiori_${cliente}.png`;
+        link.href = imgData;
+        link.click();
+      } else if (tipo === 'pdf') {
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        
+        const pdfWidth = 210;
+        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        pdf.addImage(imgData, 'JPEG', 0, 10, pdfWidth, imgHeight);
+        pdf.save(`comprovante_due_fiori_${cliente}.pdf`);
+      }
+    } catch (e) {
+      if (document.body.contains(clone)) document.body.removeChild(clone);
+      alert('Erro ao gerar arquivo: ' + e.message);
+    }
+  }
+
+  // COPIAR TEXTO FORMATADO PARA O WHATSAPP
+  function copiarTextoWhats() {
+    const dataHora = document.getElementById('inDataHora').value;
+    const cliente = document.getElementById('lblCliente').innerText;
+    const subtotal = document.getElementById('lblSubtotal').innerText;
+    const descTitulo = document.getElementById('lblDescTitulo').innerText;
+    const desconto = document.getElementById('lblDesconto').innerText;
+    const total = document.getElementById('lblTotal').innerText;
+    const forma = document.getElementById('lblFormaPagto').innerText;
+
+    let itensTxt = '';
+    document.querySelectorAll('.item-row').forEach(r => {
+      const cod = r.querySelector('.f-cod').value.trim() || '-';
+      const qtd = r.querySelector('.f-qtd').value || '1';
+      const desc = r.querySelector('.f-item').value.trim() || 'Item';
+      const unit = r.querySelector('.f-unit').value;
+      const totalItem = r.querySelector('.f-total').value;
+      itensTxt += `* [${cod}] ${qtd}x ${desc} — Unit: R$ ${unit} | Tot: ${totalItem}\n`;
+    });
+
+    const msg = 
+`✨ *COMPROVANTE DE COMPRA | Due Fiori por M&T*
+━━━━━━━━━━━━━━━━━━━━━━━
+Emissão: ${dataHora}
+Cliente: ${cliente}
+
+ITENS:
+${itensTxt}
+Subtotal: ${subtotal}
+${descTitulo} ${desconto}
+*TOTAL PAGO: ${total}*
+Forma de pagamento: ${forma}
+
+Garantia do banho: 1 ano a partir desta data.
+Celebre seu florescer! 🌷
+━━━━━━━━━━━━━━━━━━━━━━━`;
+
+    navigator.clipboard.writeText(msg).then(() => {
+      alert("Texto formatado copiado com sucesso! Agora é só colar no WhatsApp.");
+    });
+  }
+
+  window.onload = inicializarSessao;
+</script>
+
+</body>
+</html>
